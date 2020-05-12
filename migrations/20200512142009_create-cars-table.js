@@ -13,8 +13,8 @@ exports.up = function(knex) {
             .notNullable()
         table.decimal('Mileage')
             .notNullable()
-        table.text('Transmission Type', 30)
-        table.text('Status of Title', 100)
+        table.text('Transmission_Type', 30)
+        table.text('Status_of_Title', 100)
     })
 };
 
