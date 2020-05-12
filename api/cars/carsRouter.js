@@ -18,7 +18,7 @@ router.get('/:id', validateCarId, (req, res) => {
 })
 
 // inserts new car to the database
-router.post('/' , validateCar, (req, res) => {
+router.post('/' , validateCar, verifyUniqueVIN, (req, res) => {
     carData('cars')
         .insert(req.body)
             .then(carId => {
@@ -38,7 +38,7 @@ router.post('/' , validateCar, (req, res) => {
 })
 
 // updates car already in database
-router.put('/:id', validateCar, validateCarId, (req, res) => {
+router.put('/:id', validateCar, validateCarId, verifyUniqueVIN, (req, res) => {
     carData('cars').where({ id: req.params.id }).update(req.body)
         .then(numberOfCarsUpdated => {
             if (numberOfCarsUpdated === 1) {
@@ -93,6 +93,23 @@ function validateCarId(req, res, next) {
             .then(car => {
                     req.car = car
                     next()
+            })
+            .catch(() => {
+                    res.status(400).json({ message: 'You requested with an invalid car id' })
+            })
+}
+
+function verifyUniqueVIN(req, res, next) {
+    // get car with the VIN in body and if there is none then that means the incoming post is unique, otherwise return a 400 error
+    // this function allows for VIN to be the same as the VIN of the car being updated, but no others
+    carData('cars')
+        .where({ VIN: req.body.VIN })
+            .then(carWithSameVINAsRequestBody => {
+                if (carWithSameVINAsRequestBody.length === 1 && parseInt(req.params.id) ===  carWithSameVINAsRequestBody[0].id || carWithSameVINAsRequestBody.length === 0) {
+                    next()
+                } else {
+                    res.status(400).json({ message: 'The new VIN must be unique to this car' })
+                }
             })
             .catch(() => {
                     res.status(400).json({ message: 'You requested with an invalid car id' })
